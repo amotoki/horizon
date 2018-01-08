@@ -33,6 +33,7 @@ MICROVERSION_FEATURES = {
         "remote_console_mks": ["2.8", "2.53"]
     },
     "cinder": {
+        "groups": ["3.27", "3.43", "3.48"],
         "consistency_groups": ["2.0", "3.10"],
         "message_list": ["3.5", "3.29"]
     }

@@ -297,6 +297,16 @@ TEST_GLOBAL_MOCKS_ON_PANELS = {
                    '.aggregates.panel.Aggregates.can_access'),
         'return_value': True,
     },
+    'cgroups': {
+        'method': ('openstack_dashboard.dashboards.project'
+                   '.cgroups.panel.CGroups.allowed'),
+        'return_value': True,
+    },
+    'cg_snapshots': {
+        'method': ('openstack_dashboard.dashboards.project'
+                   '.cg_snapshots.panel.CGSnapshots.allowed'),
+        'return_value': True,
+    },
     'trunk': {
         'method': ('openstack_dashboard.dashboards.project'
                    '.trunks.panel.Trunks.can_access'),
@@ -305,6 +315,16 @@ TEST_GLOBAL_MOCKS_ON_PANELS = {
     'qos': {
         'method': ('openstack_dashboard.dashboards.project'
                    '.network_qos.panel.NetworkQoS.can_access'),
+        'return_value': True,
+    },
+    'volume_groups': {
+        'method': ('openstack_dashboard.dashboards.project'
+                   '.volume_groups.panel.VolumeGroups.allowed'),
+        'return_value': True,
+    },
+    'vg_snapshots': {
+        'method': ('openstack_dashboard.dashboards.project'
+                   '.vg_snapshots.panel.GroupSnapshots.allowed'),
         'return_value': True,
     },
 }
