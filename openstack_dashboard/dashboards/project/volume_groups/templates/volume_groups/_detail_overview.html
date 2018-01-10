@@ -14,11 +14,6 @@
     <dd>{{ group.availability_zone }}</dd>
     <dt>{% trans "Group Type" %}</dt>
     <dd>{{ group.group_type }}</dd>
-    {# group_snapshot_id is not populated propoerly, so we don't show it. #}
-    {% comment %}
-    <dt>{% trans "Group Snapshot" %}</dt>
-    <dd>{{ group.group_snapshot_id }}</dd>
-    {% endcomment %}
     <dt>{% trans "Created" %}</dt>
     <dd>{{ group.created_at|parse_isotime }}</dd>
     <dt>{% trans "Replication Status" %}</dt>
@@ -36,8 +31,8 @@
   <h4>{% trans "Volumes" %}</h4>
   <hr class="header_rule">
   <dl class="dl-horizontal">
-  {% for vol_names in group.volume_names %}
-    <dd>{{ vol_names }}</dd>
+  {% for vol in group.volume_names %}
+    <dd><a href="{% url 'horizon:project:volumes:detail' vol.id %}">{{ vol.name }}</a></dd>
   {% empty %}
     <dd>
       <em>{% trans "No assigned volumes" %}</em>

@@ -109,6 +109,24 @@ class VolumeTableMixIn(object):
                     attached_instance_ids.append(server_id)
         return attached_instance_ids
 
+    def _get_groups(self, volumes):
+        needs_group = False
+        if volumes and hasattr(volumes[0], 'group_id'):
+            needs_group = True
+        if needs_group:
+            try:
+                groups = cinder.group_list(self.request)
+                groups = dict((g.id, g) for g in groups)
+            except Exception:
+                groups = {}
+                exceptions.handle(self.request,
+                                  _("Unable to retrieve groups"))
+        for volume in volumes:
+            if needs_group:
+                volume._group = groups.get(volume.group_id)
+            else:
+                volume._group = None
+
     # set attachment string and if volume has snapshots
     def _set_volume_attributes(self,
                                volumes,
@@ -137,6 +155,7 @@ class VolumesView(tables.PagedTableMixin, VolumeTableMixIn,
         volume_ids_with_snapshots = self._get_volumes_ids_with_snapshots()
         self._set_volume_attributes(
             volumes, instances, volume_ids_with_snapshots)
+        self._get_groups(volumes)
         return volumes
 
 

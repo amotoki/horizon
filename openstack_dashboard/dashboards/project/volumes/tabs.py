@@ -14,8 +14,10 @@
 
 from django.utils.translation import ugettext_lazy as _
 
+from horizon import exceptions
 from horizon import tabs
 
+from openstack_dashboard.api import cinder
 from openstack_dashboard.dashboards.project.snapshots import tables
 
 
@@ -47,9 +49,28 @@ class SnapshotTab(tabs.TableTab):
         snapshots = self.tab_group.kwargs['snapshots']
         volume = self.tab_group.kwargs['volume']
 
-        if volume is not None:
-            for snapshot in snapshots:
-                snapshot._volume = volume
+        if volume is None:
+            return snapshots
+
+        needs_gs = any(getattr(snapshot, 'group_snapshot_id', None)
+                       for snapshot in snapshots)
+        group_snapshots = {}
+        if needs_gs:
+            try:
+                group_snapshots = cinder.group_snapshot_list(self.request)
+                group_snapshots = dict((gs.id, gs) for gs
+                                       in group_snapshots)
+            except Exception:
+                exceptions.handle(self.request,
+                                  _("Unable to retrieve group snapshots"))
+
+        for snapshot in snapshots:
+            snapshot._volume = volume
+            if needs_gs:
+                gs_id = snapshot.group_snapshot_id
+                snapshot._group_snapshot = group_snapshots.get(gs_id)
+            else:
+                snapshot._group_snapshot = None
 
         return snapshots
 

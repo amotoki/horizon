@@ -286,7 +286,8 @@ class DetailView(tabs.TabView):
             search_opts = {'group_id': group_id}
             volumes = api.cinder.volume_list(self.request,
                                              search_opts=search_opts)
-            group.volume_names = [vol.name for vol in volumes]
+            group.volume_names = [{'id': vol.id, 'name': vol.name}
+                                  for vol in volumes]
         except Exception:
             redirect = self.get_redirect_url()
             exceptions.handle(self.request,

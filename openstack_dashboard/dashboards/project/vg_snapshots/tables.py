@@ -10,6 +10,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from django.core.urlresolvers import reverse
 from django.utils.translation import pgettext_lazy
 from django.utils.translation import ugettext_lazy as _
 from django.utils.translation import ungettext_lazy
@@ -60,6 +61,17 @@ class UpdateRow(tables.Row):
         return vg_snapshot
 
 
+class GroupNameColumn(tables.WrappingColumn):
+    def get_raw_data(self, snapshot):
+        group = snapshot._group
+        return group.name if group else _("-")
+
+    def get_link_url(self, snapshot):
+        group = snapshot._group
+        if group:
+            return reverse(self.link, args=(group.id,))
+
+
 class GroupSnapshotsFilterAction(tables.FilterAction):
 
     def filter(self, table, vg_snapshots, filter_string):
@@ -99,6 +111,10 @@ class GroupSnapshotsTable(tables.DataTable):
                            status=True,
                            status_choices=STATUS_CHOICES,
                            display_choices=STATUS_DISPLAY_CHOICES)
+    group = GroupNameColumn(
+        "name",
+        verbose_name=_("Group"),
+        link="horizon:project:volume_groups:detail")
 
     def get_object_id(self, vg_snapshot):
         return vg_snapshot.id

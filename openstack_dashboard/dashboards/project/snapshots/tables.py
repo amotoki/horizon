@@ -18,6 +18,7 @@ from django.utils.http import urlencode
 from django.utils.translation import ugettext_lazy as _
 from django.utils.translation import ungettext_lazy
 
+from horizon import exceptions
 from horizon import tables
 
 from openstack_dashboard import api
@@ -174,6 +175,17 @@ class SnapshotVolumeNameColumn(tables.WrappingColumn):
             return reverse(self.link, args=(volume_id,))
 
 
+class GroupSnapshotNameColumn(tables.WrappingColumn):
+    def get_raw_data(self, snapshot):
+        group_snapshot = snapshot._group_snapshot
+        return group_snapshot.name if group_snapshot else _("-")
+
+    def get_link_url(self, snapshot):
+        group_snapshot = snapshot._group_snapshot
+        if group_snapshot:
+            return reverse(self.link, args=(group_snapshot.id,))
+
+
 class VolumeSnapshotsFilterAction(tables.FilterAction):
 
     def filter(self, table, snapshots, filter_string):
@@ -184,10 +196,27 @@ class VolumeSnapshotsFilterAction(tables.FilterAction):
 
 
 class VolumeDetailsSnapshotsTable(volume_tables.VolumesTableBase):
+    group_snapshot = GroupSnapshotNameColumn(
+        "name",
+        verbose_name=_("Group Snapshot"),
+        link="horizon:project:vg_snapshots:detail")
     name = tables.WrappingColumn(
         "name",
         verbose_name=_("Name"),
         link="horizon:project:snapshots:detail")
+
+    def __init__(self, request, data=None, needs_form_wrapper=None, **kwargs):
+        super(VolumeDetailsSnapshotsTable, self).__init__(
+            request, data=data, needs_form_wrapper=needs_form_wrapper,
+            **kwargs)
+        try:
+            version = cinder.get_microversion(request, 'groups')
+        except Exception:
+            exceptions.handle(_("Unable to check if generic volume group "
+                                "feature is supported."))
+            version = None
+        if not version:
+            del self.columns['group_snapshot']
 
     class Meta(object):
         name = "volume_snapshots"

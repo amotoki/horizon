@@ -393,6 +393,17 @@ class AttachmentColumn(tables.WrappingColumn):
         return safestring.mark_safe(", ".join(attachments))
 
 
+class GroupNameColumn(tables.WrappingColumn):
+    def get_raw_data(self, snapshot):
+        group = snapshot._group
+        return group.name if group else _("-")
+
+    def get_link_url(self, snapshot):
+        group = snapshot._group
+        if group:
+            return reverse(self.link, args=(group.id,))
+
+
 def get_volume_type(volume):
     return volume.volume_type if volume.volume_type != "None" else None
 
@@ -498,6 +509,10 @@ class VolumesTable(VolumesTableBase):
     name = tables.WrappingColumn("name",
                                  verbose_name=_("Name"),
                                  link="horizon:project:volumes:detail")
+    group = GroupNameColumn(
+        "name",
+        verbose_name=_("Group"),
+        link="horizon:project:volume_groups:detail")
     volume_type = tables.Column(get_volume_type,
                                 verbose_name=_("Type"))
     attachments = AttachmentColumn("attachments",
@@ -510,6 +525,19 @@ class VolumesTable(VolumesTableBase):
     encryption = tables.Column(get_encrypted_value,
                                verbose_name=_("Encrypted"),
                                link=get_encrypted_link)
+
+    def __init__(self, request, data=None, needs_form_wrapper=None, **kwargs):
+        super(VolumesTable, self).__init__(
+            request, data=data, needs_form_wrapper=needs_form_wrapper,
+            **kwargs)
+        try:
+            version = cinder.get_microversion(request, 'groups')
+        except Exception:
+            exceptions.handle(_("Unable to check if generic volume group "
+                                "feature is supported."))
+            version = None
+        if not version:
+            del self.columns['group']
 
     class Meta(object):
         name = "volumes"
