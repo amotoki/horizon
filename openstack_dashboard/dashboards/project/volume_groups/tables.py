@@ -12,6 +12,7 @@
 
 from cinderclient import exceptions as cinder_exc
 
+from django.template import defaultfilters as filters
 from django.utils.translation import pgettext_lazy
 from django.utils.translation import ugettext_lazy as _
 
@@ -37,6 +38,11 @@ class DeleteGroup(policy.PolicyTargetMixin, tables.LinkAction):
     url = "horizon:project:volume_groups:delete"
     classes = ("ajax-modal", "btn-danger")
     policy_rules = (("volume", "group:delete"), )
+
+    def allowed(self, request, datum=None):
+        if datum and datum.has_snapshots:
+            return False
+        return True
 
 
 class RemoveAllVolumes(policy.PolicyTargetMixin, tables.LinkAction):
@@ -157,6 +163,9 @@ class GroupsTable(tables.DataTable):
                                       verbose_name=_("Availability Zone"))
     volume_type = tables.Column(get_volume_types,
                                 verbose_name=_("Volume Type(s)"))
+    has_snapshots = tables.Column("has_snapshots",
+                                  verbose_name=_("Snapshots"),
+                                  filters=(filters.yesno,))
 
     def get_object_id(self, group):
         return group.id

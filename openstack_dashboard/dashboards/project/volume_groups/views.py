@@ -47,11 +47,16 @@ class IndexView(tables.DataTableView):
     def get_data(self):
         try:
             groups = api.cinder.group_list_with_vol_type_names(self.request)
-
         except Exception:
             groups = []
             exceptions.handle(self.request,
                               _("Unable to retrieve volume groups."))
+        if not groups:
+            return groups
+        group_snapshots = api.cinder.group_snapshot_list(self.request)
+        snapshot_groups = {gs.group_id for gs in group_snapshots}
+        for g in groups:
+            g.has_snapshots = g.id in snapshot_groups
         return groups
 
 
